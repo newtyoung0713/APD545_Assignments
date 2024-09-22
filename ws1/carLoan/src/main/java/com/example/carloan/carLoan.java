@@ -30,7 +30,7 @@ public class carLoan extends Application {
     // Initialize UI elements
     vehicleTypeField = new TextField();
     vehicleTypeField.setPromptText("Car/ Truck");
-    vehicleTypeField.setPrefWidth(200);
+    vehicleTypeField.setPrefWidth(270);
     vehicleAgeField = new TextField();
     vehicleAgeField.setPromptText("New/ Used");
     carPriceField = new TextField();
@@ -104,8 +104,8 @@ public class carLoan extends Application {
     gridPane.add(estimatedLoanLabel, 0, 8);
     gridPane.add(monthlyPaymentField, 1, 8);
 
-    // Create the scene and set the stage (w: 450, h: 500)
-    Scene scene = new Scene(gridPane, 450, 500);
+    // Create the scene and set the stage (w: 500, h: 400)
+    Scene scene = new Scene(gridPane, 500, 400);
     primaryStage.setScene(scene);
     primaryStage.show();
 
@@ -125,6 +125,18 @@ public class carLoan extends Application {
   }
 
   private void calculateMonthlyPayment() {
+    // Check if all fields are filled
+    if (vehicleTypeField.getText().isEmpty() ||
+        vehicleAgeField.getText().isEmpty() ||
+        carPriceField.getText().isEmpty() ||
+        downPaymentField.getText().isEmpty() ||
+        interestRateField.getText().isEmpty() ||
+        loanPaymentFrequencyField.getText().isEmpty()) {
+      // Show an error message if any field is empty
+      monthlyPaymentField.setText("All fields are required.");
+      return;
+    }
+
     try {
       // Get user input
       double carPrice = Double.parseDouble(carPriceField.getText());
@@ -135,29 +147,28 @@ public class carLoan extends Application {
 
       // Get loan payment frequency
       String paymentFrequency = loanPaymentFrequencyField.getText().toLowerCase();
-      double paymentPerPeriod = 0;
+      double paymentPerPeriod;
       int periods = 0;
+      double periodicInterestRate = 0;
       // Determine payment frequency logic
-      double periodicInterestRate = switch (paymentFrequency) {
-        case "weekly" -> {
-          // Loan duration in weeks
-          periods = loanDuration * 4 * 12 / 52;
-          // Weekly interest rate
-          yield interestRate / 52;
-        }
-        case "bi-weekly", "biweekly" -> {
-          // Loan duration in bi-weekly periods
-          periods = loanDuration * 4 * 12 / 26;
-          // Bi-weekly interest rate
-          yield interestRate / 26;
-        }
-        default -> {
-          // Loan duration in months
-          periods = loanDuration;
-          // Monthly interest rate
-          yield interestRate / 12;
-        }
-      };
+      switch (paymentFrequency) {
+        case "weekly":
+          periods = loanDuration * 4 * 12 / 52; // Loan duration in weeks
+          periodicInterestRate = interestRate / 52; // Weekly interest rate
+          break;
+        case "biweekly":
+        case "bi-weekly":
+          periods = loanDuration * 4 * 12 / 26; // Loan duration in bi-weekly periods
+          periodicInterestRate = interestRate / 26; // Bi-weekly interest rate
+          break;
+        case "monthly":
+          periods = loanDuration; // Loan duration in months
+          periodicInterestRate = interestRate / 12; // Monthly interest rate
+          break;
+        default:
+          monthlyPaymentField.setText("Please enter Weekly, Bi-weekly, or Monthly");
+          return;
+      }
 
       // Calculate payment per period
       paymentPerPeriod = (loanAmount * periodicInterestRate) / (1 - Math.pow(1 + periodicInterestRate, -periods));
@@ -178,6 +189,7 @@ public class carLoan extends Application {
     downPaymentField.clear();
     interestRateField.clear();
     loanDurationSlider.setValue(12);
+    loanPaymentFrequencyField.clear();
     monthlyPaymentField.clear();
   }
 
