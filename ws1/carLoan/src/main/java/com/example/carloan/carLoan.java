@@ -1,3 +1,14 @@
+/**********************************************
+Workshop #
+Course:<APD545> - Semester
+Last Name:<Yang>
+First Name:<Sheng-Lin>
+ID:<160443222>
+Section:<NBB>
+This assignment represents my own work in accordance with Seneca Academic Policy. Signature
+Date:<Sep-22 2024>
+**********************************************/
+
 package com.example.carloan;
 import javafx.application.Application;
 import javafx.geometry.HPos;
