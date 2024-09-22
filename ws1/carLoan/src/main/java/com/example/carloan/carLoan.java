@@ -11,11 +11,11 @@ public class carLoan extends Application {
 
   // UI Elements
   private TextField vehicleTypeField, vehicleAgeField, carPriceField,
-          downPaymentField, interestRateField, loanPaymentFrequencyField,
-          monthlyPaymentField;
+                    downPaymentField, interestRateField, loanPaymentFrequencyField,
+                    monthlyPaymentField;
   private Label vehicleTypeLabel, vehicleAgeLabel, carPriceLabel,
-          downPaymentLabel, interestRateLabel, loanPaymentFrequencyLabel,
-          loanDurationLabel, monthlyPaymentLabel, estimatedLoanLabel;
+                downPaymentLabel, interestRateLabel, loanPaymentFrequencyLabel,
+                loanDurationLabel, estimatedLoanLabel;
   private Slider loanDurationSlider;
   private Button calculateButton, clearButton;
 
@@ -56,7 +56,6 @@ public class carLoan extends Application {
     loanDurationSlider.setMajorTickUnit(12);      // Set tick marks every 12 months
     loanDurationSlider.setShowTickMarks(true);
     loanDurationSlider.setShowTickLabels(true);
-    // monthlyPaymentLabel = new Label("Monthly Payment: $0.00");
     estimatedLoanLabel = new Label("Your Estimated Fixed Rate Loan Payment is");
     estimatedLoanLabel.setWrapText(true);
     estimatedLoanLabel.setMaxWidth(150);
@@ -112,10 +111,14 @@ public class carLoan extends Application {
 
     // Event handlers
     loanDurationSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
-      int months = newVal.intValue();
+      // int months = newVal.intValue();
       // loanDurationLabel.setText("Loan Payment Period: " + months + " months");
       loanDurationLabel.setText("Loan Payment Period:");
     });
+
+    addNumericValidation(carPriceField);
+    addNumericValidation(downPaymentField);
+    addNumericValidation(interestRateField);
 
     calculateButton.setOnAction(e -> calculateMonthlyPayment());
     clearButton.setOnAction(e -> clearForm());
@@ -130,18 +133,40 @@ public class carLoan extends Application {
       double interestRate = Double.parseDouble(interestRateField.getText()) / 100;
       int loanDuration = (int) loanDurationSlider.getValue();
 
-      // Monthly interest rate
-      double monthlyInterestRate = interestRate / 12;
+      // Get loan payment frequency
+      String paymentFrequency = loanPaymentFrequencyField.getText().toLowerCase();
+      double paymentPerPeriod = 0;
+      int periods = 0;
+      // Determine payment frequency logic
+      double periodicInterestRate = switch (paymentFrequency) {
+        case "weekly" -> {
+          // Loan duration in weeks
+          periods = loanDuration * 4 * 12 / 52;
+          // Weekly interest rate
+          yield interestRate / 52;
+        }
+        case "bi-weekly", "biweekly" -> {
+          // Loan duration in bi-weekly periods
+          periods = loanDuration * 4 * 12 / 26;
+          // Bi-weekly interest rate
+          yield interestRate / 26;
+        }
+        default -> {
+          // Loan duration in months
+          periods = loanDuration;
+          // Monthly interest rate
+          yield interestRate / 12;
+        }
+      };
 
-      // Calculate monthly payment
-      double monthlyPayment = (loanAmount * monthlyInterestRate) /
-              (1 - Math.pow(1 + monthlyInterestRate, -loanDuration));
+      // Calculate payment per period
+      paymentPerPeriod = (loanAmount * periodicInterestRate) / (1 - Math.pow(1 + periodicInterestRate, -periods));
 
       // Display the result formatted as currency
-      monthlyPaymentLabel.setText(String.format("Monthly Payment: $%.2f", monthlyPayment));
+      monthlyPaymentField.setText(String.format("$%.2f", paymentPerPeriod));
     } catch (NumberFormatException ex) {
       // Handle invalid input
-      monthlyPaymentLabel.setText("Please enter valid numbers.");
+      monthlyPaymentField.setText("Invalid input");
     }
   }
 
@@ -153,6 +178,12 @@ public class carLoan extends Application {
     downPaymentField.clear();
     interestRateField.clear();
     loanDurationSlider.setValue(12);
-    monthlyPaymentLabel.setText("Monthly Payment: $0.00");
+    monthlyPaymentField.clear();
+  }
+
+  private void addNumericValidation(TextField textField) {
+   textField.textProperty().addListener((observable, oldValue, newValue) -> {
+     if (!newValue.matches("\\d*(\\.\\d*)?")) interestRateField.setText(oldValue);
+   });
   }
 }
